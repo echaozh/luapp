@@ -16,21 +16,15 @@ namespace luapp
 {
     namespace details
     {
-        void pseudo_table::extract (ssize_t index)
-        {
-            throw logic_error ("global/local enviroment cannot be indexed by "
-                               "integers");
-        }
-
-        void pseudo_table::set_at (ssize_t index)
-        {
-            throw logic_error ("global/local enviroment cannot be indexed by "
-                               "integers");
-        }
-
         void global_env::extract (const string &name)
         {
             lua_getglobal (l (), name.c_str ());
+        }
+
+        void global_env::extract (ssize_t index)
+        {
+            throw logic_error ("global enviroment cannot be indexed by "
+                               "integers");
         }
 
         void global_env::set_at (const string &field)
@@ -38,66 +32,53 @@ namespace luapp
             lua_setglobal (l (), field.c_str ());
         }
 
-        void local_env::extract (const string &name)
+        void global_env::set_at (ssize_t index)
         {
-            throw logic_error ("local enviroment cannot be indexed");
-        }
-
-        void local_env::set_at (const string &field)
-        {
-            throw logic_error ("local enviroment cannot be indexed");
+            throw logic_error ("global enviroment cannot be indexed by "
+                               "integers");
         }
     }
 
     void object::push ()
     {
-        if (local_)
-            // already on stack, do nothing
-            ;
-        else if (name_.empty ())
-            parent_->extract (index_);
+        parent_.push ();
+        if (name_.empty ())
+            parent_.extract (index_);
         else
-            parent_->extract (name_);
+            parent_.extract (name_);
+        parent_.dequeue ();
     }
 
     void object::pop ()
     {
-        if (!local_)
-            l_.pop ();
+        l_.pop ();
     }
 
     void object::set ()
     {
-        if (local_)
-            // nowhere to set, do nothing
-            ;
-        else if (name_.empty ())
-            parent_->set_at (index_);
+        if (name_.empty ())
+            parent_.set_at (index_);
         else
-            parent_->set_at (name_);
+            parent_.set_at (name_);
     }
 
     void table::create (size_t arr, size_t hash)
     {
-        parent_->push ();
+        parent_.push ();
         lua_createtable (l (), arr, hash);
         set ();
-        parent_->pop ();
+        parent_.pop ();
     }
 
     void table::extract (const string &field)
     {
-        push ();
         lua_getfield (l (), -1, field.c_str ());
-        lua_replace (l (), -2);
     }
 
     void table::extract (ssize_t index)
     {
-        push ();
         l_ << index;
         lua_gettable (l (), -2);
-        lua_replace (l (), -2);
     }
 
     void table::set_at (const string &field)
@@ -115,9 +96,9 @@ namespace luapp
 
     void function::define (lua_CFunction func)
     {
-        parent_->push ();
+        parent_.push ();
         l_ << func;
         set ();
-        parent_->pop ();
+        parent_.pop ();
     }
 }
