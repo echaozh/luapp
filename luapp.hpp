@@ -33,6 +33,7 @@ namespace luapp
         size_t top () const {return lua_gettop (l_);}
         void pop (size_t n = 1) {lua_pop (l_, n);}
         void clear () {lua_settop (l_, 0);}
+        void remove (ssize_t n) {lua_remove (l_, n);}
 
     public:
         void load_base () {luaopen_base (l_);}
@@ -52,7 +53,7 @@ namespace luapp
 
     private:
         void pcall (size_t argc);
-        void dequeue () {lua_remove (l_ ,1);}
+        void dequeue () {remove (1);}
 
     public:
         friend class details::has_lua;
