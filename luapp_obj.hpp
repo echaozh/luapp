@@ -72,15 +72,15 @@ namespace luapp
     public:
         object (lua &l)
             : details::has_lua (l), env_ (new details::local_env (l)),
-              parent_ (env_), local_ (true) {}
+              parent_ (*env_), local_ (true) {}
         object (lua &l, const std::string &name)
             : details::has_lua (l), env_ (new details::global_env (l)),
-              parent_ (env_), local_ (false), name_ (name) {}
+              parent_ (*env_), local_ (false), name_ (name) {}
         object (lua &l, details::table_base &parent, const std::string &name)
-            : details::has_lua (l), env_ (0), parent_ (&parent), local_ (false),
+            : details::has_lua (l), env_ (0), parent_ (parent), local_ (false),
               name_ (name) {}
         object (lua &l, details::table_base &parent, ssize_t index)
-            : details::has_lua (l), env_ (0), parent_ (&parent), local_ (false),
+            : details::has_lua (l), env_ (0), parent_ (parent), local_ (false),
               index_ (index)
             {}
         virtual ~object () {if (env_) delete env_;}
@@ -93,7 +93,7 @@ namespace luapp
     private:
         details::table_base *env_;
     protected:
-        details::table_base *parent_;
+        details::table_base &parent_;
         bool local_;
         std::string name_;
         ssize_t index_;
@@ -202,10 +202,10 @@ namespace luapp
         T get () {push (); T v; l_ >> v; return v;}
         void set (const T &v)
             {
-                parent_->push ();
+                parent_.push ();
                 l_ << v;
                 set ();
-                parent_->pop ();
+                parent_.pop ();
             }
 
     private:

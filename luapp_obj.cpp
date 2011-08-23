@@ -55,9 +55,9 @@ namespace luapp
             // already on stack, do nothing
             ;
         else if (name_.empty ())
-            parent_->extract (index_);
+            parent_.extract (index_);
         else
-            parent_->extract (name_);
+            parent_.extract (name_);
     }
 
     void object::pop ()
@@ -72,17 +72,17 @@ namespace luapp
             // nowhere to set, do nothing
             ;
         else if (name_.empty ())
-            parent_->set_at (index_);
+            parent_.set_at (index_);
         else
-            parent_->set_at (name_);
+            parent_.set_at (name_);
     }
 
     void table::create (size_t arr, size_t hash)
     {
-        parent_->push ();
+        parent_.push ();
         lua_createtable (l (), arr, hash);
         set ();
-        parent_->pop ();
+        parent_.pop ();
     }
 
     void table::extract (const string &field)
@@ -115,9 +115,9 @@ namespace luapp
 
     void function::define (lua_CFunction func)
     {
-        parent_->push ();
+        parent_.push ();
         l_ << func;
         set ();
-        parent_->pop ();
+        parent_.pop ();
     }
 }
