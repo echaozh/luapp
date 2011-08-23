@@ -49,25 +49,6 @@ namespace luapp
         }
     }
 
-    // void object::make_global (const string &name)
-    // {
-    //     if (!local_)
-    //         throw logic_error ("only local objects can be made global");
-    //     if (l_.top () != 1)
-    //         throw logic_error ("don't know where we are on stack");
-
-    //     lua_setglobal (l (), name.c_str ());
-    //     // NOTE: if we fail to alloc the name, there will be a stray global var
-    //     //       but it does no bad
-    //     name_ = name;
-    //     // NOTE: if we fail to alloc the env, the name itself is not looked at
-    //     details::table_base *env = new details::global_env (l_);
-    //     // NOTE: these never fail
-    //     delete (env_);
-    //     parent_ = env_ = env;
-    //     local_ = false;
-    // }
-
     void object::push ()
     {
         if (local_)

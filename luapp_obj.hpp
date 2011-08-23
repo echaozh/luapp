@@ -79,17 +79,11 @@ namespace luapp
         object (lua &l, details::table_base &parent, const std::string &name)
             : details::has_lua (l), env_ (0), parent_ (&parent), local_ (false),
               name_ (name) {}
-        object (lua &l, ssize_t index)
-            : details::has_lua (l), env_ (new details::global_env (l)),
-              parent_ (env_), local_ (false), index_ (index) {}
         object (lua &l, details::table_base &parent, ssize_t index)
             : details::has_lua (l), env_ (0), parent_ (&parent), local_ (false),
               index_ (index)
             {}
         virtual ~object () {if (env_) delete env_;}
-
-    // public:
-    //     void make_global (const std::string &name);
 
     protected:
         virtual void push ();
@@ -115,9 +109,6 @@ namespace luapp
         table (lua &l, table &parent, const std::string &name)
             : details::has_lua (l), details::table_base (l),
               object (l, parent, name) {}
-        table (lua &l, ssize_t index)
-            : details::has_lua (l), details::table_base (l), object (l, index)
-            {}
         table (lua &l, table &parent, ssize_t index)
             : details::has_lua (l), details::table_base (l),
               object (l, parent, index) {}
@@ -137,14 +128,10 @@ namespace luapp
     class function : public object
     {
     public:
-        function (lua &l)
-            : details::has_lua (l), object (l) {}
         function (lua &l, const std::string &name)
             : details::has_lua (l), object (l, name) {}
         function (lua &l, table &parent, const std::string &name)
             : details::has_lua (l), object (l, parent, name) {}
-        function (lua &l, ssize_t index)
-            : details::has_lua (l), object (l, index) {}
         function (lua &l, table &parent, ssize_t index)
             : details::has_lua (l), object (l, parent, index) {}
 
@@ -204,14 +191,10 @@ namespace luapp
     class value : public object
     {
     public:
-        value (lua &l)
-            : details::has_lua (l), object (l) {}
         value (lua &l, const std::string &name)
             : details::has_lua (l), object (l, name) {}
         value (lua &l, table &parent, const std::string &name)
             : details::has_lua (l), object (l, parent, name) {}
-        value (lua &l, ssize_t index)
-            : details::has_lua (l), object (l, index) {}
         value (lua &l, table &parent, ssize_t index)
             : details::has_lua (l), object (l, parent, index) {}
 
