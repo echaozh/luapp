@@ -18,11 +18,16 @@ namespace luapp
 {
     class lua;
     lua &operator << (lua &l, ptrdiff_t n);
+    lua &operator << (lua &l, double d);
     lua &operator << (lua &l, lua_CFunction f);
+    template <typename Container>
+    lua &operator << (lua &l, const Container &c);
 
     lua &operator >> (lua &l, int32_t &n);
     lua &operator >> (lua &l, uint32_t &n);
     lua &operator >> (lua &l, std::string &s);
+    template <typename Container>
+    lua &operator >> (lua &l, Container &c);
 }
 
 #endif // INCLUDED_LUAPP_STACKOPS_HPP_

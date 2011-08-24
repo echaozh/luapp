@@ -10,6 +10,7 @@
 
 #include <lua.hpp>
 
+#include <cassert>
 #include <stdexcept>
 #include <string>
 
@@ -32,9 +33,9 @@ namespace luapp
         public:
             table_base (lua &l) : has_lua (l) {}
         public:
-            virtual void push () = 0;
-            virtual void pop () = 0;
-            virtual void dequeue () = 0;
+            virtual void push () const = 0;
+            virtual void pop () const = 0;
+            virtual void dequeue () const = 0;
             virtual void extract (const std::string &field) = 0;
             virtual void extract (ssize_t index) = 0;
             virtual void set_at (const std::string &field) = 0;
@@ -45,9 +46,9 @@ namespace luapp
         public:
             global_env (lua &l) : has_lua (l), table_base (l) {}
         public:
-            virtual void push () {}
-            virtual void pop () {}
-            virtual void dequeue () {}
+            virtual void push () const {}
+            virtual void pop () const {}
+            virtual void dequeue () const {}
             virtual void extract (const std::string &field);
             virtual void extract (ssize_t index);
             virtual void set_at (const std::string &field);
@@ -69,8 +70,8 @@ namespace luapp
         virtual ~object () {if (env_) delete env_;}
 
     protected:
-        virtual void push ();
-        virtual void pop ();
+        virtual void push () const;
+        virtual void pop () const;
         virtual void set ();
 
     private:
@@ -95,11 +96,12 @@ namespace luapp
 
     public:
         void create (size_t arr = 0, size_t hash = 0);
+        size_t array_size () const;
 
     public:
-        virtual void push () {object::push ();}
-        virtual void pop () {object::pop ();}
-        virtual void dequeue () {l_.remove (-2);}
+        virtual void push () const {object::push ();}
+        virtual void pop () const {object::pop ();}
+        virtual void dequeue () const {l_.remove (-2);}
         virtual void extract (const std::string &field);
         virtual void extract (ssize_t index);
         virtual void set_at (const std::string &field);
@@ -143,9 +145,15 @@ namespace luapp
         template <typename Result0, typename... Results>
         size_t pop_results (Result0 &result0, Results&&... results)
             {
-                return dequeue_result (result0)
-                    ? 1 + pop_results (std::forward<Results> (results)...)
-                    : 0;
+                if (l_.empty ())
+                    return 0;
+                const size_t count = sizeof... (results) + 1;
+                while (count < l_.top ())
+                    l_.pop ();
+                const size_t n = l_.top ();
+                pop_results (l_.top (), result0,
+                             std::forward<Results> (results)...);
+                return n;
             }
         template <typename Result0>
         Result0 pop_result () {Result0 r; pop_results (r); return r;}
@@ -155,13 +163,14 @@ namespace luapp
         template <typename Arg0, typename... Argv>
         void push_args (const Arg0 &arg0, Argv&&... argv)
             {l_ << arg0; push_args (std::forward<Argv> (argv)...);}
-        template <typename Result>
-        bool dequeue_result (Result &result)
+        void pop_results (size_t n) {assert (false);}
+        template <typename Result0, typename... Results>
+        void pop_results (size_t n, Result0 &result0, Results&&... results)
             {
-                if (l_.empty ())
-                    return false;
-                l_ >> result;
-                return true;
+                assert (n != 0);
+                if (n != 1)
+                    pop_results (n - 1, std::forward<Results> (results)...);
+                l_ >> result0;
             }
     };
 
@@ -177,7 +186,13 @@ namespace luapp
             : details::has_lua (l), object (l, parent, index) {}
 
     public:
-        T get () {push (); T v; l_ >> v; return v;}
+        T get () const
+            {
+                push ();
+                T v;
+                l_ >> v;
+                return v;
+            }
         void set (const T &v)
             {
                 parent_.push ();
@@ -197,9 +212,9 @@ namespace luapp
             : details::has_lua (l), table (l, "") {}
 
     public:
-        virtual void push () {}
-        virtual void pop () {}
-        virtual void dequeue () {}
+        virtual void push () const {}
+        virtual void pop () const {}
+        virtual void dequeue () const {}
 
     private:
         virtual void set () {}
