@@ -18,13 +18,15 @@ namespace luapp
 {
     namespace details
     {
+        class table_base;
         struct has_lua
         {
         public:
             has_lua (lua &l) : l_ (l) {}
+            has_lua (table_base &t);
             virtual ~has_lua () {}
         protected:
-            lua_State * &l () const {return l_.l_;}
+            lua_State * &ll () const {return l_.l_;}
         protected:
             mutable lua &l_;
         };
@@ -40,6 +42,9 @@ namespace luapp
             virtual void extract (ssize_t index) = 0;
             virtual void set_at (const std::string &field) = 0;
             virtual void set_at (ssize_t index) = 0;
+        private:
+            friend class has_lua;
+            lua &l () const {return l_;}
         };
         struct global_env : public table_base
         {
@@ -62,11 +67,12 @@ namespace luapp
         object (lua &l, const std::string &name)
             : details::has_lua (l), env_ (new details::global_env (l)),
               parent_ (*env_), name_ (name) {}
-        object (lua &l, details::table_base &parent, const std::string &name)
-            : details::has_lua (l), env_ (0), parent_ (parent), name_ (name) {}
-        object (lua &l, details::table_base &parent, ssize_t index)
-            : details::has_lua (l), env_ (0), parent_ (parent), index_ (index)
-            {}
+        object (details::table_base &parent, const std::string &name)
+            : details::has_lua (parent), env_ (0), parent_ (parent),
+              name_ (name) {}
+        object (details::table_base &parent, ssize_t index)
+            : details::has_lua (parent), env_ (0), parent_ (parent),
+              index_ (index) {}
         virtual ~object () {if (env_) delete env_;}
 
     protected:
@@ -87,12 +93,12 @@ namespace luapp
     public:
         table (lua &l, const std::string &name)
             : details::has_lua (l), details::table_base (l), object (l, name) {}
-        table (lua &l, table &parent, const std::string &name)
-            : details::has_lua (l), details::table_base (l),
-              object (l, parent, name) {}
-        table (lua &l, table &parent, ssize_t index)
-            : details::has_lua (l), details::table_base (l),
-              object (l, parent, index) {}
+        table (table &parent, const std::string &name)
+            : details::has_lua (parent), details::table_base (l_),
+              object (parent, name) {}
+        table (table &parent, ssize_t index)
+            : details::has_lua (parent), details::table_base (l_),
+              object (parent, index) {}
 
     public:
         void create (size_t arr = 0, size_t hash = 0);
@@ -106,6 +112,9 @@ namespace luapp
         virtual void extract (ssize_t index);
         virtual void set_at (const std::string &field);
         virtual void set_at (ssize_t index);
+
+    private:
+        friend class details::has_lua;
     };
 
     class function : public object
@@ -113,10 +122,10 @@ namespace luapp
     public:
         function (lua &l, const std::string &name)
             : details::has_lua (l), object (l, name) {}
-        function (lua &l, table &parent, const std::string &name)
-            : details::has_lua (l), object (l, parent, name) {}
-        function (lua &l, table &parent, ssize_t index)
-            : details::has_lua (l), object (l, parent, index) {}
+        function (table &parent, const std::string &name)
+            : details::has_lua (parent), object (parent, name) {}
+        function (table &parent, ssize_t index)
+            : details::has_lua (parent), object (parent, index) {}
 
     public:
         void define (lua_CFunction func);
@@ -180,10 +189,10 @@ namespace luapp
     public:
         value (lua &l, const std::string &name)
             : details::has_lua (l), object (l, name) {}
-        value (lua &l, table &parent, const std::string &name)
-            : details::has_lua (l), object (l, parent, name) {}
-        value (lua &l, table &parent, ssize_t index)
-            : details::has_lua (l), object (l, parent, index) {}
+        value (table &parent, const std::string &name)
+            : details::has_lua (parent), object (parent, name) {}
+        value (table &parent, ssize_t index)
+            : details::has_lua (parent), object (parent, index) {}
 
     public:
         T get () const

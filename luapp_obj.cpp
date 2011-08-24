@@ -16,9 +16,14 @@ namespace luapp
 {
     namespace details
     {
+        has_lua::has_lua (table_base &t)
+            : l_ (t.l ())
+        {
+        }
+
         void global_env::extract (const string &name)
         {
-            lua_getglobal (l (), name.c_str ());
+            lua_getglobal (ll (), name.c_str ());
         }
 
         void global_env::extract (ssize_t index)
@@ -29,7 +34,7 @@ namespace luapp
 
         void global_env::set_at (const string &field)
         {
-            lua_setglobal (l (), field.c_str ());
+            lua_setglobal (ll (), field.c_str ());
         }
 
         void global_env::set_at (ssize_t index)
@@ -65,7 +70,7 @@ namespace luapp
     void table::create (size_t arr, size_t hash)
     {
         parent_.push ();
-        lua_createtable (l (), arr, hash);
+        lua_createtable (ll (), arr, hash);
         set ();
         parent_.pop ();
     }
@@ -73,33 +78,33 @@ namespace luapp
     size_t table::array_size () const
     {
         push ();
-        size_t n = lua_objlen (l (), -1);
+        size_t n = lua_objlen (ll (), -1);
         pop ();
         return n;
     }
 
     void table::extract (const string &field)
     {
-        lua_getfield (l (), -1, field.c_str ());
+        lua_getfield (ll (), -1, field.c_str ());
     }
 
     void table::extract (ssize_t index)
     {
         l_ << index;
-        lua_gettable (l (), -2);
+        lua_gettable (ll (), -2);
     }
 
     void table::set_at (const string &field)
     {
-        lua_setfield (l (), -2, field.c_str ());
+        lua_setfield (ll (), -2, field.c_str ());
     }
 
     void table::set_at (ssize_t index)
     {
         l_ << index;
-        lua_pushvalue (l (), -2);
-        lua_remove (l (), -3);
-        lua_settable (l (), -3);
+        lua_pushvalue (ll (), -2);
+        lua_remove (ll (), -3);
+        lua_settable (ll (), -3);
     }
 
     void function::define (lua_CFunction func)

@@ -19,7 +19,7 @@ namespace luapp
         temp_table t (l);
         t.create (c.size ());
         for (size_t i = 0; i < c.size (); ++i) {
-            value<typename Container::value_type> v (l, t, i + 1);
+            value<typename Container::value_type> v (t, i + 1);
             v.set (c[i]);
         }
     }
@@ -31,7 +31,7 @@ namespace luapp
         temp_table t (l);
         c.resize (t.array_size ());
         for (size_t i = 0; i < c.size (); ++i) {
-            value<typename Container::value_type> v (l, t, i + 1);
+            value<typename Container::value_type> v (t, i + 1);
             c[i] = v.get ();
         }
         l.pop ();
