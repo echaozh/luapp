@@ -39,7 +39,7 @@ namespace luapp
         }
     }
 
-    void object::push ()
+    void object::push () const
     {
         parent_.push ();
         if (name_.empty ())
@@ -49,7 +49,7 @@ namespace luapp
         parent_.dequeue ();
     }
 
-    void object::pop ()
+    void object::pop () const
     {
         l_.pop ();
     }
@@ -68,6 +68,14 @@ namespace luapp
         lua_createtable (l (), arr, hash);
         set ();
         parent_.pop ();
+    }
+
+    size_t table::array_size () const
+    {
+        push ();
+        size_t n = lua_objlen (l (), -1);
+        pop ();
+        return n;
     }
 
     void table::extract (const string &field)

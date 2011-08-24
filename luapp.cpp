@@ -37,11 +37,11 @@ namespace luapp
         }
     }
 
-    string lua::dequeue_str ()
+    string lua::pop_str ()
     {
-        const char *cp = lua_tostring (l_, 1);
+        const char *cp = lua_tostring (l_, -1);
         string s = cp ?: "";
-        dequeue ();
+        pop ();
         return s;
     }
 }

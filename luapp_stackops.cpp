@@ -16,6 +16,11 @@ namespace luapp
         l.push_int (n);
         return l;
     }
+    lua &operator << (lua &l, double d)
+    {
+        l.push_number (d);
+        return l;
+    }
     lua &operator << (lua &l, lua_CFunction f)
     {
         l.push_func (f);
@@ -24,17 +29,17 @@ namespace luapp
 
     lua &operator >> (lua &l, int32_t &n)
     {
-        n = l.dequeue_int ();
+        n = l.pop_int ();
         return l;
     }
     lua &operator >> (lua &l, uint32_t &n)
     {
-        n = l.dequeue_int ();
+        n = l.pop_int ();
         return l;
     }
     lua &operator >> (lua &l, std::string &s)
     {
-        s = l.dequeue_str ();
+        s = l.pop_str ();
         return l;
     }
 }
