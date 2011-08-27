@@ -21,27 +21,35 @@ namespace luapp
         {
         }
 
-        void global_env::extract (const string &name)
+        void global_env::extract (const string &name) const
         {
             lua_getglobal (ll (), name.c_str ());
         }
 
-        void global_env::extract (ssize_t index)
+        void global_env::extract (ssize_t index) const
         {
             throw logic_error ("global enviroment cannot be indexed by "
                                "integers");
         }
 
-        void global_env::set_at (const string &field)
+        void global_env::set_at (const string &field) const
         {
             lua_setglobal (ll (), field.c_str ());
         }
 
-        void global_env::set_at (ssize_t index)
+        void global_env::set_at (ssize_t index) const
         {
             throw logic_error ("global enviroment cannot be indexed by "
                                "integers");
         }
+    }
+
+    bool object::is_nil () const
+    {
+        push ();
+        bool res = lua_isnil (ll (), -1);
+        pop ();
+        return res;
     }
 
     void object::push () const
@@ -59,7 +67,7 @@ namespace luapp
         l_.pop ();
     }
 
-    void object::set ()
+    void object::set () const
     {
         if (name_.empty ())
             parent_.set_at (index_);
@@ -67,7 +75,7 @@ namespace luapp
             parent_.set_at (name_);
     }
 
-    void table::create (size_t arr, size_t hash)
+    void table::create (size_t arr, size_t hash) const
     {
         parent_.push ();
         lua_createtable (ll (), arr, hash);
@@ -83,23 +91,23 @@ namespace luapp
         return n;
     }
 
-    void table::extract (const string &field)
+    void table::extract (const string &field) const
     {
         lua_getfield (ll (), -1, field.c_str ());
     }
 
-    void table::extract (ssize_t index)
+    void table::extract (ssize_t index) const
     {
         l_ << index;
         lua_gettable (ll (), -2);
     }
 
-    void table::set_at (const string &field)
+    void table::set_at (const string &field) const
     {
         lua_setfield (ll (), -2, field.c_str ());
     }
 
-    void table::set_at (ssize_t index)
+    void table::set_at (ssize_t index) const
     {
         l_ << index;
         lua_pushvalue (ll (), -2);
@@ -107,7 +115,7 @@ namespace luapp
         lua_settable (ll (), -3);
     }
 
-    void function::define (lua_CFunction func)
+    void function::define (lua_CFunction func) const
     {
         parent_.push ();
         l_ << func;
