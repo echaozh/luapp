@@ -43,7 +43,7 @@ namespace luapp
     typename std::enable_if<std::is_integral<Integral>::value, lua &>::type
     operator >> (lua &l, Integral &n)
     {
-        uint64_t m;
+        ptrdiff_t m;
         l >> m;
         n = m;
         return l;
