@@ -36,12 +36,4 @@ namespace luapp
                 throw std::bad_alloc ();
         }
     }
-
-    string lua::pop_str ()
-    {
-        const char *cp = lua_tostring (l_, -1);
-        string s = cp ?: "";
-        pop ();
-        return s;
-    }
 }
