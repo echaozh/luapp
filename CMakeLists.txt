@@ -10,6 +10,6 @@ find_package (Lua51 REQUIRED)
 include_directories (${LUA_INCLUDE_DIR})
 target_link_libraries (luapp ${LUA_LIBRARIES})
 
-install (TARGETS luapp ARCHIVE DESTINATION bin)
+install (TARGETS luapp ARCHIVE DESTINATION lib)
 install (FILES luapp.hpp luapp_stackops.hpp luapp_obj.hpp luapp_impl.hpp
   DESTINATION include/luapp)
