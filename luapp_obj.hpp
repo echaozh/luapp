@@ -168,7 +168,8 @@ namespace luapp
                 return n;
             }
         template <typename Result0>
-        Result0 pop_result () const {Result0 r; pop_results (r); return r;}
+        Result0 pop_result () const
+            {Result0 r = Result0 (); pop_results (r); return r;}
 
     private:
         void push_args () const {}
