@@ -8,7 +8,7 @@
 #include "luapp.hpp"
 #include "luapp_obj.hpp"
 
-#include <iostream>
+#include <lua.h>
 
 using namespace std;
 
@@ -16,17 +16,17 @@ namespace luapp
 {
     namespace details
     {
-        has_lua::has_lua (table_base &t)
-            : l_ (t.l ())
+        has_lua::has_lua (const table &parent)
+            : l_ (parent.l ())
         {
         }
 
-        void global_env::extract (const string &name) const
+        void global_env::get_at (const string &name) const
         {
             lua_getglobal (ll (), name.c_str ());
         }
 
-        void global_env::extract (ssize_t index) const
+        void global_env::get_at (ssize_t index) const
         {
             throw logic_error ("global enviroment cannot be indexed by "
                                "integers");
@@ -44,6 +44,15 @@ namespace luapp
         }
     }
 
+    object::object (const table &parent, const string &name)
+        : details::has_lua (parent), env_ (0), parent_ (parent), name_ (name)
+    {
+    }
+    object::object (const table &parent, ssize_t index)
+        : details::has_lua (parent), env_ (0), parent_ (parent), index_ (index)
+    {
+    }
+
     bool object::is_nil () const
     {
         push ();
@@ -56,9 +65,9 @@ namespace luapp
     {
         parent_.push ();
         if (name_.empty ())
-            parent_.extract (index_);
+            parent_.get_at (index_);
         else
-            parent_.extract (name_);
+            parent_.get_at (name_);
         parent_.dequeue ();
     }
 
@@ -86,17 +95,34 @@ namespace luapp
     size_t table::array_size () const
     {
         push ();
-        size_t n = lua_objlen (ll (), -1);
+        lua_len (ll (), -1);
+        size_t n;
+        l_ >> n;
         pop ();
         return n;
     }
 
-    void table::extract (const string &field) const
+    deque<string> table::string_keys () const
+    {
+        deque<string> keys;
+
+        push ();
+        lua_pushnil (ll ());
+        while (lua_next (ll (), -2)) {
+            if (lua_isstring (ll (), -2))
+                keys.push_back (lua_tostring (ll (), -2));
+            l_.pop ();
+        }
+        pop ();
+        return keys;
+    }
+
+    void table::get_at (const string &field) const
     {
         lua_getfield (ll (), -1, field.c_str ());
     }
 
-    void table::extract (ssize_t index) const
+    void table::get_at (ssize_t index) const
     {
         l_ << index;
         lua_gettable (ll (), -2);

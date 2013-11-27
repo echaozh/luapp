@@ -11,8 +11,6 @@
 #include "luapp.hpp"
 #include "luapp_obj.hpp"
 
-#include <iostream>
-
 namespace luapp
 {
     template <typename Integral>

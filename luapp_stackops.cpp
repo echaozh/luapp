@@ -7,53 +7,51 @@
 
 #include "luapp.hpp"
 
-#include <iostream>
-
 using namespace std;
 
 namespace luapp
 {
     lua &operator << (lua &l, bool b)
     {
-        lua_pushboolean (l.l_, b);
+        lua_pushboolean (l.l (), b);
         return l;
     }
     lua &operator << (lua &l, ptrdiff_t n)
     {
-        lua_pushinteger (l.l_, n);
+        lua_pushinteger (l.l (), n);
         return l;
     }
     lua &operator << (lua &l, double d)
     {
-        lua_pushnumber (l.l_, d);
+        lua_pushnumber (l.l (), d);
         return l;
     }
     lua &operator << (lua &l, const string &s)
     {
-        lua_pushstring (l.l_, s.c_str ());
+        lua_pushstring (l.l (), s.c_str ());
         return l;
     }
     lua &operator << (lua &l, lua_CFunction f)
     {
-        lua_pushcfunction (l.l_, f);
+        lua_pushcfunction (l.l (), f);
         return l;
     }
 
     lua &operator >> (lua &l, bool &b)
     {
-        b = lua_toboolean (l.l_, -1);
+        b = lua_toboolean (l.l (), -1);
         l.pop ();
         return l;
     }
     lua &operator >> (lua &l, ptrdiff_t &n)
     {
-        n = lua_tointeger (l.l_, -1);
+        n = lua_tointeger (l.l (), -1);
         l.pop ();
         return l;
     }
     lua &operator >> (lua &l, double &d)
     {
-        d = lua_tonumber (l.l_, -1);
+        d = lua_tonumber (l.l (), -1);
         l.pop ();
         return l;
     }
@@ -66,7 +64,7 @@ namespace luapp
     }
     lua &operator >> (lua &l, std::string &s)
     {
-        const char *cp = lua_tostring (l.l_, -1);
+        const char *cp = lua_tostring (l.l (), -1);
         s = cp ?: "";
         l.pop ();
         return l;

@@ -11,24 +11,27 @@
 #include <lua.hpp>
 
 #include <cassert>
+#include <deque>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
 namespace luapp
 {
+    class object;
+    class table;
     namespace details
     {
-        class table_base;
         struct has_lua
         {
         public:
             has_lua (lua &l) : l_ (l) {}
-            has_lua (table_base &t);
+            has_lua (const table &parent);
             virtual ~has_lua () {}
         protected:
-            lua_State * &ll () const {return l_.l_;}
+            lua_State *ll () const {return l_.l ();}
         protected:
-            mutable lua &l_;
+            lua &l_;
         };
         struct table_base : public virtual has_lua
         {
@@ -38,13 +41,10 @@ namespace luapp
             virtual void push () const = 0;
             virtual void pop () const = 0;
             virtual void dequeue () const = 0;
-            virtual void extract (const std::string &field) const = 0;
-            virtual void extract (ssize_t index) const = 0;
+            virtual void get_at (const std::string &field) const = 0;
+            virtual void get_at (ssize_t index) const = 0;
             virtual void set_at (const std::string &field) const = 0;
             virtual void set_at (ssize_t index) const = 0;
-        private:
-            friend class has_lua;
-            lua &l () const {return l_;}
         };
         struct global_env : public table_base
         {
@@ -54,8 +54,8 @@ namespace luapp
             virtual void push () const {}
             virtual void pop () const {}
             virtual void dequeue () const {}
-            virtual void extract (const std::string &field) const;
-            virtual void extract (ssize_t index) const;
+            virtual void get_at (const std::string &field) const;
+            virtual void get_at (ssize_t index) const;
             virtual void set_at (const std::string &field) const;
             virtual void set_at (ssize_t index) const;
         };
@@ -67,24 +67,22 @@ namespace luapp
         object (lua &l, const std::string &name)
             : details::has_lua (l), env_ (new details::global_env (l)),
               parent_ (*env_), name_ (name) {}
-        object (const details::table_base &parent, const std::string &name)
-            : details::has_lua (parent), env_ (0), parent_ (parent),
-              name_ (name) {}
-        object (const details::table_base &parent, ssize_t index)
-            : details::has_lua (parent), env_ (0), parent_ (parent),
-              index_ (index) {}
+        object (const table &parent, const std::string &name);
+        object (const table &parent, ssize_t index);
         virtual ~object () {if (env_) delete env_;}
 
     public:
         bool is_nil () const;
 
-    protected:
+    public:
         virtual void push () const;
         virtual void pop () const;
+
+    protected:
         virtual void set () const;
 
     private:
-        details::table_base *env_;
+        details::global_env *env_;
     protected:
         const details::table_base &parent_;
         std::string name_;
@@ -106,18 +104,20 @@ namespace luapp
     public:
         void create (size_t arr = 0, size_t hash = 0) const;
         size_t array_size () const;
+        std::deque<std::string> string_keys () const;
 
     public:
         virtual void push () const {object::push ();}
         virtual void pop () const {object::pop ();}
         virtual void dequeue () const {l_.remove (-2);}
-        virtual void extract (const std::string &field) const;
-        virtual void extract (ssize_t index) const;
+        virtual void get_at (const std::string &field) const;
+        virtual void get_at (ssize_t index) const;
         virtual void set_at (const std::string &field) const;
         virtual void set_at (ssize_t index) const;
 
     private:
         friend class details::has_lua;
+        lua &l () const {return l_;}
     };
 
     class function : public object
@@ -163,8 +163,8 @@ namespace luapp
                 while (count < l_.top ())
                     l_.pop ();
                 const size_t n = l_.top ();
-                pop_results (l_.top (), result0,
-                             std::forward<Results> (results)...);
+                do_pop_results (l_.top (), result0,
+                                std::forward<Results> (results)...);
                 return n;
             }
         template <typename Result0>
@@ -172,18 +172,28 @@ namespace luapp
             {Result0 r = Result0 (); pop_results (r); return r;}
 
     private:
+
+        // we don't want to impl << for object types, 'coz we don't want them
+        // to be settable as value
+        template <typename Object>
+        typename std::enable_if<std::is_base_of<object, Object>::value,
+                                void>::type
+        push_arg (const Object &o) const {o.push ();}
+        template <typename T>
+        typename std::enable_if<!std::is_base_of<object, T>::value, void>::type
+        push_arg (const T &v) const {l_ << v;}
         void push_args () const {}
         template <typename Arg0, typename... Argv>
         void push_args (const Arg0 &arg0, Argv&&... argv) const
-            {l_ << arg0; push_args (std::forward<Argv> (argv)...);}
-        void pop_results (size_t n) const {assert (false);}
+            {push_arg (arg0); push_args (std::forward<Argv> (argv)...);}
+        void do_pop_results (size_t n) const {assert (false);}
         template <typename Result0, typename... Results>
-        void pop_results (size_t n, Result0 &result0, Results&&... results)
+        void do_pop_results (size_t n, Result0 &result0, Results&&... results)
             const
             {
                 assert (n != 0);
                 if (n != 1)
-                    pop_results (n - 1, std::forward<Results> (results)...);
+                    do_pop_results (n - 1, std::forward<Results> (results)...);
                 l_ >> result0;
             }
     };
