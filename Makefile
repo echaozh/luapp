@@ -3,7 +3,7 @@
 all: debug release-build
 
 check: debug
-	LD_LIBRARY_PATH=build/debug build/debug/test
+	LD_LIBRARY_PATH="build/debug:$$LD_LIBRARY_PATH" build/debug/test
 
 debug: build/debug/Makefile
 	make -C build/debug
